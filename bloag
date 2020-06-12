@@ -21,14 +21,12 @@ printf "%s\n" \
 </rss>" >"$output"
 }
 
-post_body() {
-  curl -s "$blog_url" > /tmp/bloag_site.html
-
-  post_title="$(
+post_title() {
   grep -m 1 "a href=\"#[0-9].*" /tmp/bloag_site.html | \
     sed "s/.*<\/p> //g; s/<.*//g"
-  )"
+}
 
+post_body() {
   line="$(grep -in "^ *<\/div>" /tmp/bloag_site.html | awk 'NR==1 {print $1}')"
   line2="$(head -n "${line%?}" /tmp/bloag_site.html | grep -m 1 -in \
     "<div id=\".*\" class=\"project\"" | awk 'NR==1 {print $1}'
@@ -41,7 +39,7 @@ post_body() {
 add_post() {
 sed -i "s/<\/lastBuildDate>/<\/lastBuildDate>\n\
 <item>\n\
-<title>$post_title<\/title>\n\
+<title>$(post_title)<\/title>\n\
 <link>\\$post_link<\/link>\n\
 <description>\n\
 $(post_body)\n\
@@ -57,6 +55,7 @@ backup() {
 
 post_link="$link"
 
+curl -s "$blog_url" > /tmp/bloag_site.html
 date="$(date +"%a, %d %b %Y %H:%M:%S +0200")"
 
 case "$1" in
