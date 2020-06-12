@@ -2,17 +2,15 @@
 
 blog_url="https://samedamci.me/blog/index.html"
 blog_title="samedamci's blog"
-href="/blog/rss.xml"
 link="/blog"
 description="Blog with my thoughts about world."
 output="rss.xml"
 
 init() {
 printf "%s\n" \
-"<rss version=\"2.0\">
+"<rss version=\"2.0\" xmlns:atom=\"http://www.w3.org/2005/Atom\">
 <!-- Deployed with bloag (https://git.samedamci.me/samedamci/bloag) -->
 <channel>
-<atom:link href=\"$href\" rel=\"self\" type=\"application/rss+xml\"/>
 <title>$blog_title</title>
 <link>$link</link>
 <description>$description</description>
@@ -33,7 +31,7 @@ post_body() {
   )"
   head -n "${line%?}" /tmp/bloag_site.html > /tmp/bloag_site2.html
   sed "1,${line2%?}d" /tmp/bloag_site2.html | sed '1d; $ d' | \
-    sed 's/\//\\\//g; s/\"/\\\"/g' | tr '\n' '\\n' | sed 's/   //g; s/  / /g; s/^ //g'
+    sed 's/\//\\\//g; s/\"/\\\"/g' | tr -d '\n' | sed 's/   //g; s/  / /g; s/^ //g;'
 }
 
 add_post() {
@@ -41,9 +39,9 @@ sed -i "s/<\/lastBuildDate>/<\/lastBuildDate>\n\
 <item>\n\
 <title>$(post_title)<\/title>\n\
 <link>\\$post_link<\/link>\n\
-<description>\n\
+<description><![CDATA[\n\
 $(post_body)\n\
-<\/description>\n\
+]]><\/description>\n\
 <pubDate>$date<\/pubDate>\n\
 <\/item>/g; s/<lastBuildDate>.*<\/lastBuildDate>/\
 <lastBuildDate>$date<\/lastBuildDate>/g" "$output"
