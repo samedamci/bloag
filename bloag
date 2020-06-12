@@ -5,7 +5,7 @@ blog_title="samedamci's blog"
 href="/blog/rss.xml"
 link="/blog"
 description="Blog with my thoughts about world."
-output="test.xml"
+output="rss.xml"
 
 init() {
 printf "%s\n" \
@@ -21,24 +21,22 @@ printf "%s\n" \
 </rss>" >"$output"
 }
 
-parse_site() {
-  curl -s "$blog_url" > /tmp/blugger_site.html
+post_body() {
+  curl -s "$blog_url" > /tmp/bloag_site.html
 
   post_title="$(
-  grep -m 1 "a href=\"#[0-9].*" /tmp/blugger_site.html | \
+  grep -m 1 "a href=\"#[0-9].*" /tmp/bloag_site.html | \
     sed "s/.*<\/p> //g; s/<.*//g"
   )"
 
-  line="$(grep -in "^ *<\/div>" /tmp/blugger_site.html | awk 'NR==1 {print $1}')"
-  line2="$(head -n "${line%?}" /tmp/blugger_site.html | grep -m 1 -in \
+  line="$(grep -in "^ *<\/div>" /tmp/bloag_site.html | awk 'NR==1 {print $1}')"
+  line2="$(head -n "${line%?}" /tmp/bloag_site.html | grep -m 1 -in \
     "<div id=\".*\" class=\"project\"" | awk 'NR==1 {print $1}'
   )"
-  head -n "${line%?}" /tmp/blugger_site.html > /tmp/blugger_site2.html
-  sed "1,${line2%?}d" /tmp/blugger_site2.html | sed '1d; $ d' | \
+  head -n "${line%?}" /tmp/bloag_site.html > /tmp/bloag_site2.html
+  sed "1,${line2%?}d" /tmp/bloag_site2.html | sed '1d; $ d' | \
     sed 's/\//\\\//g; s/\"/\\\"/g' | tr '\n' '\\n' | sed 's/   //g; s/  / /g; s/^ //g'
 }
-
-content="$(parse_site)"
 
 add_post() {
 sed -i "s/<\/lastBuildDate>/<\/lastBuildDate>\n\
@@ -46,7 +44,7 @@ sed -i "s/<\/lastBuildDate>/<\/lastBuildDate>\n\
 <title>$post_title<\/title>\n\
 <link>\\$post_link<\/link>\n\
 <description>\n\
-$content\n\
+$(post_body)\n\
 <\/description>\n\
 <pubDate>$date<\/pubDate>\n\
 <\/item>/g; s/<lastBuildDate>.*<\/lastBuildDate>/\
@@ -57,13 +55,13 @@ backup() {
   cp "$output" "$output.backup"
 }
 
-
 post_link="$link"
 
 date="$(date +"%a, %d %b %Y %H:%M:%S +0200")"
 
-backup
-# add_post
-init
+case "$1" in
+  update) backup && add_post;;
+  init) init ;;
+esac
 
-rm /tmp/blugger*
+rm -f /tmp/bloag*
