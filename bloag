@@ -1,7 +1,5 @@
 #!/bin/sh
 
-blog_url="https://samedamci.me/blog/index.html"
-curl -s "$blog_url" > /tmp/bloag_site.html
 blog_title="samedamci's blog"
 link="https://samedamci.me/blog/rss.xml"
 description="Blog with my thoughts about world."
@@ -39,9 +37,8 @@ get_id() {
   sed 's/.*href="#//g; s/">.*//g; 1q' /tmp/bloag_site2.html
 }
 
-post_body="$(get_post_body)"
-
 add_post() {
+post_body="$(get_post_body)"
 last_id="$([ -f "$HOME/.cache/bloag" ] && cat "$HOME/.cache/bloag")"
 [ "$last_id" = "$(get_id)" ] && exit 111
 
@@ -58,23 +55,37 @@ $post_body\n\
 get_id > "$HOME/.cache/bloag"
 }
 
-help_message="
-Usage: bloag [-h] [-o FILE]
+detect_input() {
+  input="$1"
+  if echo "$input" | grep -q "http.*\:\/\/.*"; then
+    curl -s "$input" > /tmp/bloag_site.html
+  else
+    cp "$input" /tmp/bloag_site.html
+  fi
+}
 
-  -o FILE     Output file
+
+help_message="
+Usage: bloag [-h] [-i FILE/URL] [-o FILE]
+
+  -i FILE/URL   Input HTML file or URL
+  -o FILE       Output file
 "
 
-while getopts 'o::h' c
+while getopts 'o:i:h' c
 do
   case $c in
     o) output="$OPTARG";;
+    i) detect_input "$OPTARG";;
     h) echo "$help_message"; exit 0;;
     [?]) echo "Invalid option, use '-h'."; exit 1;;
   esac
 done
 
 if [ ! -f "$output" ]; then
-  init && rm -f "$HOME/.cache/bloag"
+  init
+  rm -f "$HOME/.cache/bloag"
+  echo "Initialized new file, please run command again!"
 else
   add_post
 fi
