@@ -2,9 +2,8 @@
 
 blog_url="https://samedamci.me/blog/index.html"
 blog_title="samedamci's blog"
-link="/blog"
+link="https://samedamci.me/blog/rss.xml"
 description="Blog with my thoughts about world."
-output="rss.xml"
 
 init() {
 printf "%s\n" \
@@ -12,7 +11,6 @@ printf "%s\n" \
 <!-- Deployed with bloag (https://git.samedamci.me/samedamci/bloag) -->
 <channel>
 <title>$blog_title</title>
-<link>$link</link>
 <description>$description</description>
 <lastBuildDate>$date</lastBuildDate>
 </channel>
@@ -56,9 +54,23 @@ post_link="$link"
 curl -s "$blog_url" > /tmp/bloag_site.html
 date="$(date +"%a, %d %b %Y %H:%M:%S +0200")"
 
-case "$1" in
-  update) backup && add_post;;
-  init) init ;;
-esac
+help_message="
+Usage: bloag [-h] [-o FILE]
+
+  -o FILE     Output file
+"
+
+while getopts 'o::h' c
+do
+  case $c in
+    o) output="$OPTARG";;
+    h) echo "$help_message"; exit 0;;
+    [?]) echo "Invalid option, use '-h'."; exit 1;;
+  esac
+done
+
+if [ ! -f "$output" ]; then init; else
+  backup && add_post
+fi
 
 rm -f /tmp/bloag*
