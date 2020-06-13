@@ -1,9 +1,11 @@
 #!/bin/sh
 
 blog_url="https://samedamci.me/blog/index.html"
+curl -s "$blog_url" > /tmp/bloag_site.html
 blog_title="samedamci's blog"
 link="https://samedamci.me/blog/rss.xml"
 description="Blog with my thoughts about world."
+date="$(date +"%a, %d %b %Y %H:%M:%S +0200")"
 
 init() {
 printf "%s\n" \
@@ -11,6 +13,7 @@ printf "%s\n" \
 <!-- Deployed with bloag (https://git.samedamci.me/samedamci/bloag) -->
 <channel>
 <title>$blog_title</title>
+<link>$link</link>
 <description>$description</description>
 <lastBuildDate>$date</lastBuildDate>
 </channel>
@@ -22,37 +25,38 @@ post_title() {
     sed "s/.*<\/p> //g; s/<.*//g"
 }
 
-post_body() {
+get_post_body() {
   line="$(grep -in "^ *<\/div>" /tmp/bloag_site.html | awk 'NR==1 {print $1}')"
   line2="$(head -n "${line%?}" /tmp/bloag_site.html | grep -m 1 -in \
     "<div id=\".*\" class=\"project\"" | awk 'NR==1 {print $1}'
   )"
-  head -n "${line%?}" /tmp/bloag_site.html > /tmp/bloag_site2.html
-  sed "1,${line2%?}d" /tmp/bloag_site2.html | sed '1d; $ d' | \
-    sed 's/\//\\\//g; s/\"/\\\"/g' | tr -d '\n' | sed 's/   //g; s/  / /g; s/^ //g;'
+  head -n "${line%?}" /tmp/bloag_site.html | sed "1,${line2%?}d" | \
+    tee /tmp/bloag_site2.html | sed '1d; $ d' | sed 's/\//\\\//g; s/\"/\\\"/g' | \
+      tr -d '\n' | sed 's/   //g; s/  / /g; s/^ //g;'
 }
 
+get_id() {
+  sed 's/.*href="#//g; s/">.*//g; 1q' /tmp/bloag_site2.html
+}
+
+post_body="$(get_post_body)"
+
 add_post() {
+last_id="$([ -f "$HOME/.cache/bloag" ] && cat "$HOME/.cache/bloag")"
+[ "$last_id" = "$(get_id)" ] && exit 111
+
 sed -i "s/<\/lastBuildDate>/<\/lastBuildDate>\n\
 <item>\n\
 <title>$(post_title)<\/title>\n\
-<link>\\$post_link<\/link>\n\
 <description><![CDATA[\n\
-$(post_body)\n\
+$post_body\n\
 ]]><\/description>\n\
 <pubDate>$date<\/pubDate>\n\
 <\/item>/g; s/<lastBuildDate>.*<\/lastBuildDate>/\
 <lastBuildDate>$date<\/lastBuildDate>/g" "$output"
+
+get_id > "$HOME/.cache/bloag"
 }
-
-backup() {
-  cp "$output" "$output.backup"
-}
-
-post_link="$link"
-
-curl -s "$blog_url" > /tmp/bloag_site.html
-date="$(date +"%a, %d %b %Y %H:%M:%S +0200")"
 
 help_message="
 Usage: bloag [-h] [-o FILE]
@@ -69,8 +73,10 @@ do
   esac
 done
 
-if [ ! -f "$output" ]; then init; else
-  backup && add_post
+if [ ! -f "$output" ]; then
+  init && rm -f "$HOME/.cache/bloag"
+else
+  add_post
 fi
 
 rm -f /tmp/bloag*
