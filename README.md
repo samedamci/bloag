@@ -10,11 +10,6 @@ work as static site generator.
 ## Usage
 *Works only with samedamci.me blog...*
 
-Remote:
 ```
-$ bloag -i https://samedamci.me/blog/index.html -o blog/rss.xml
-```
-Local:
-```
-$ bloag -i blog/index.html -o blog/rss.xml
+$ bloag -H blog/index.html -R blog/rss.xml -M input.md
 ```

@@ -109,7 +109,7 @@ else
 
   last_id="$([ -f "$HOME/.cache/bloag" ] && cat "$HOME/.cache/bloag")"
   if [ "$last_id" = "$(get_id)" ]; then
-    echo "dadadalkfhal"
+    echo "Something goes wrong..."
     exit 111
   fi
   render_html_post
