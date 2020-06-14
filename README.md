@@ -1,11 +1,9 @@
 # bloag
 
-Database-less RSS blog generator from static HTML page.
-Created to deploying RSS version of blog on [samedamci.me](https://samedamci.me/blog).
-Very basic and primitive version currently only working with this site,
-because it reads specific HTML structure to generate posts.
-In the future this tool will can also generate website and
-work as static site generator.
+Database-less RSS and static HTML blog generator from Markdown files.
+Created to deploying blog on [samedamci.me](https://samedamci.me/blog).
+Very basic and primitive version currently only working with this site.
+In future I will create scheme to generate full blog from scratch but... not now.
 
 ## Usage
 *Works only with samedamci.me blog...*
