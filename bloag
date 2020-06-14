@@ -20,7 +20,7 @@ printf "%s\n" \
 
 post_title() {
   grep -m 1 "a href=\"#[0-9].*" /tmp/bloag_site.html | \
-    sed "s/.*<\/p> //g; s/<.*//g"
+    sed "s/.*<\/p> //g; s/<.*//g; s/\//\\\\\//g"
 }
 
 get_post_body() {
@@ -29,7 +29,7 @@ get_post_body() {
     "<div id=\".*\" class=\"project\"" | sed 's/\:.*<div.*//g; 1q'
   )"
   head -n "${line}" /tmp/bloag_site.html | sed "1,${line2}d" | \
-    tee /tmp/bloag_site2.html | sed '1d; $ d' | sed 's/\//\\\//g; s/\"/\\\"/g' | \
+    tee /tmp/bloag_site2.html | sed '1d; $ d' | sed 's/\//\\\//g; s/\"/\\\"/g; s/\?/\\?/g' | \
       tr -d '\n' | sed 's/   //g; s/  / /g; s/^ //g; s/<div class=\\\"date\\\">.*<\\\/div>//g'
 }
 
@@ -116,4 +116,4 @@ else
   render_xml_post
 fi
 
-rm -f /tmp/bloag*
+# rm -f /tmp/bloag*
