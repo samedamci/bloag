@@ -30,7 +30,7 @@ get_post_body() {
   )"
   head -n "${line}" /tmp/bloag_site.html | sed "1,${line2}d" | \
     tee /tmp/bloag_site2.html | sed '1d; $ d' | sed 's/\//\\\//g; s/\"/\\\"/g' | \
-      tr -d '\n' | sed 's/   //g; s/  / /g; s/^ //g;'
+      tr -d '\n' | sed 's/   //g; s/  / /g; s/^ //g; s/<div class=\\\"date\\\">.*<\\\/div>//g'
 }
 
 get_id() {
