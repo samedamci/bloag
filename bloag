@@ -15,7 +15,7 @@ printf "%s\n" \
 <description>$description</description>
 <lastBuildDate>$date</lastBuildDate>
 </channel>
-</rss>" >"$output"
+</rss>" >"$rss_file"
 }
 
 post_title() {
@@ -24,24 +24,22 @@ post_title() {
 }
 
 get_post_body() {
-  line="$(grep -in "^ *<\/div>" /tmp/bloag_site.html | awk 'NR==1 {print $1}')"
-  line2="$(head -n "${line%?}" /tmp/bloag_site.html | grep -m 1 -in \
-    "<div id=\".*\" class=\"project\"" | awk 'NR==1 {print $1}'
+  line="$(grep -in "^ *<\/div>" /tmp/bloag_site.html | sed 's/\:.*<\/div>//g; 1q')"
+  line2="$(head -n "${line}" /tmp/bloag_site.html | grep -m 1 -in \
+    "<div id=\".*\" class=\"project\"" | sed 's/\:.*<div.*//g; 1q'
   )"
-  head -n "${line%?}" /tmp/bloag_site.html | sed "1,${line2%?}d" | \
+  head -n "${line}" /tmp/bloag_site.html | sed "1,${line2}d" | \
     tee /tmp/bloag_site2.html | sed '1d; $ d' | sed 's/\//\\\//g; s/\"/\\\"/g' | \
       tr -d '\n' | sed 's/   //g; s/  / /g; s/^ //g;'
 }
 
 get_id() {
+  post_body="$(get_post_body)"
   sed 's/.*href="#//g; s/">.*//g; 1q' /tmp/bloag_site2.html
 }
 
-add_post() {
+render_xml_post() {
 post_body="$(get_post_body)"
-last_id="$([ -f "$HOME/.cache/bloag" ] && cat "$HOME/.cache/bloag")"
-[ "$last_id" = "$(get_id)" ] && exit 111
-
 sed -i "s/<\/lastBuildDate>/<\/lastBuildDate>\n\
 <item>\n\
 <title>$(post_title)<\/title>\n\
@@ -50,44 +48,71 @@ $post_body\n\
 ]]><\/description>\n\
 <pubDate>$date<\/pubDate>\n\
 <\/item>/g; s/<lastBuildDate>.*<\/lastBuildDate>/\
-<lastBuildDate>$date<\/lastBuildDate>/g" "$output"
-
-get_id > "$HOME/.cache/bloag"
+<lastBuildDate>$date<\/lastBuildDate>/g" "$rss_file"
 }
-
-detect_input() {
-  input="$1"
-  if echo "$input" | grep -q "http.*\:\/\/.*"; then
-    curl -s "$input" > /tmp/bloag_site.html
-  else
-    cp "$input" /tmp/bloag_site.html
-  fi
-}
-
 
 help_message="
-Usage: bloag [-h] [-i FILE/URL] [-o FILE]
+Usage: bloag [-h] [-H HTML file] [-R RSS file] [-M Markdown file]
 
-  -i FILE/URL   Input HTML file or URL
-  -o FILE       Output file
+  -H FILE       HTML file
+  -R FILE       RSS file
+  -M FILE       Markdown file
 "
 
-while getopts 'o:i:h' c
+while getopts 'R:H:M:h' c
 do
   case $c in
-    o) output="$OPTARG";;
-    i) detect_input "$OPTARG";;
+    R) rss_file="$OPTARG";;
+    H) html_file="$OPTARG" && cp "$OPTARG" /tmp/bloag_site.html;;
+    M) md_file="$OPTARG";;
     h) echo "$help_message"; exit 0;;
     [?]) echo "Invalid option, use '-h'."; exit 1;;
   esac
 done
 
-if [ ! -f "$output" ]; then
+html_date="$(date +"%Y-%m-%d %H:%M")"
+
+if [ -f "$HOME/.cache/bloag" ]; then
+  new_number="$(( $(cat "$HOME/.cache/bloag") + 1))"
+else
+  new_number="$(( "$(get_id)" + 1 ))"
+fi
+
+echo "$new_number" > "$HOME/.cache/bloag"
+
+get_html_post_body() {
+echo "<div id=\"$new_number\" class=\"project\">"
+pandoc -f markdown "$md_file" | \
+sed "s/<p>//g;\
+s/<\/p>//g; s/<h1 id=\".*\">/<a href=\"#$new_number\"><h3><p class=\"wt\">\#$new_number<\/p>/g;\
+s/<\/h1>/<\/h3><\/a>/g"
+printf "%s\n</div>\n" "<div class=\"date\">$html_date</div>"
+}
+
+html_post_body="$(get_html_post_body | sed 's/\//\\\//g; s/\"/\\\"/g' | \
+  tr -d '\n' | sed 's/   //g; s/  / /g; s/^ //g')"
+
+render_html_post() {
+sed -i "s/<div id=\"main_info\">/<div id=\"main_info\">\n$html_post_body/g" /tmp/bloag_site.html
+sed -i "s/<\/h3><\/a>/<\/h3><\/a>\n/g; s/<\/div><\/div>/\n<\/div>\n<\/div>/g;\
+s/\" class=\"project\">/\" class=\"project\">\n/g" /tmp/bloag_site.html
+sed -i '/^$/d' /tmp/bloag_site.html
+cp /tmp/bloag_site.html "$html_file"
+}
+
+if [ ! -f "$rss_file" ]; then
   init
   rm -f "$HOME/.cache/bloag"
   echo "Initialized new file, please run command again!"
 else
-  add_post
+
+  last_id="$([ -f "$HOME/.cache/bloag" ] && cat "$HOME/.cache/bloag")"
+  if [ "$last_id" = "$(get_id)" ]; then
+    echo "dadadalkfhal"
+    exit 111
+  fi
+  render_html_post
+  render_xml_post
 fi
 
 rm -f /tmp/bloag*
