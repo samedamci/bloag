@@ -1,1 +1,4 @@
-rss.xml*
+*.xml
+*.html
+*.md
+__pycache__/
