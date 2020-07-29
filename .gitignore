@@ -2,3 +2,6 @@
 *.html
 *.md
 __pycache__/
+bin/
+pyvenv.cfg
+site-packages/
