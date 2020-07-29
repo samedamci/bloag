@@ -43,7 +43,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'bloag = bloag:main',
+            'bloag = bloag.bloag:main',
         ],
     },
 )
