@@ -61,7 +61,7 @@ def main():
     html = html.replace(
         "<h1>", f"""<a href="#{args.id}"><h3><p class="wt">#{args.id}</p> """
     ).replace("</h1>", "</h3></a>")
-    html = f"""<div id="{id}" class="project">\n{html + html_date}</div>"""
+    html = f"""<div id="{args.id}" class="project">\n{html + html_date}</div>"""
     body = html.splitlines()
     del body[0:2]
     body = " ".join(body).replace("</div>", "")
