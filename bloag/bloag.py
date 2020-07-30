@@ -16,10 +16,10 @@ def arguments():
     return parser.parse_args()
 
 
-def render_HTML(date, html, file):
+def render_HTML(html, file):
     with open(file, "r") as f:
         html = f.read().replace(
-            """<div id="main_info">""", f"""<div id="main_info">\n{html + date}""",
+            """<div id="main_info">""", f"""<div id="main_info">\n{html}""",
         )
 
     with open(file, "w") as f:
@@ -61,12 +61,12 @@ def main():
     html = html.replace(
         "<h1>", f"""<a href="#{args.id}"><h3><p class="wt">#{args.id}</p> """
     ).replace("</h1>", "</h3></a>")
-    html = f"""<div id="{id}" class="project">\n{html}</div>"""
+    html = f"""<div id="{id}" class="project">\n{html + html_date}</div>"""
     body = html.splitlines()
     del body[0:2]
     body = " ".join(body).replace("</div>", "")
 
-    render_HTML(html_date, html, args.html)
+    render_HTML(html, args.html)
     render_XML(xml_date, title, body, args.rss)
 
 
